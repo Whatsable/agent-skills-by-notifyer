@@ -1,0 +1,13 @@
+{
+  "name": "setup-notifyer",
+  "version": "0.1.0",
+  "description": "Scripts for setting up and managing a Notifyer account — signup, login, team, roles, labels, API keys",
+  "type": "module",
+  "scripts": {
+    "update-filemap": "node ../../update-skill-filemap.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

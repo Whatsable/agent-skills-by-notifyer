@@ -1,0 +1,9 @@
+{
+  "_comment": "Example payload for POST /api:-4GSCDHb/auth/signup",
+  "_note": "phone_number must be a JSON integer (no quotes, no +, no spaces)",
+  "name": "Jane Smith",
+  "email": "jane@company.com",
+  "password": "Secure@123",
+  "phone_number": 14155550123,
+  "reason_of_automate": "Automate customer support notifications via WhatsApp"
+}

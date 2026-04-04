@@ -1,0 +1,26 @@
+{
+  "_comment": "Example response from GET /api:JZAUyiCs/user_plan (enriched by get-user-plan.js)",
+  "usages": 142,
+  "latest_plan": {
+    "id": 1,
+    "created_at": 1712000000000,
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "stripe_customer_id": "cus_Abc123",
+    "unique_number_limit": 500,
+    "total_unique_number_count": 142,
+    "messaging_limit_per_number": 10,
+    "start_time": 1712000000000,
+    "end_time": 1714592000000,
+    "sub_included_credit": 0,
+    "plan_amount": 2999,
+    "plan_amount_dollars": 29.99,
+    "Notes": "",
+    "is_team_subscription": false,
+    "status": "active",
+    "attempt": 0,
+    "included_seats": 3,
+    "stripe_sub_id": "sub_Xyz789",
+    "price_id": "price_1Abc123Def456",
+    "payment_status": "paid"
+  }
+}

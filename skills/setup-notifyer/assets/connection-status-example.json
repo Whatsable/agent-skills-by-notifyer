@@ -1,0 +1,25 @@
+{
+  "_comment": "Example response from GET /api:P5grzx1u/is_user_embedded (enriched by get-connection-status.js)",
+  "isConnected": true,
+  "has_embedded_user": true,
+  "registration": {
+    "success": true,
+    "message": "Registered successfully",
+    "whatsapp_response": {
+      "id": "12345678901234567",
+      "success": true
+    }
+  },
+  "subscription": {
+    "success": true,
+    "message": "Subscribed successfully",
+    "whatsapp_response": {
+      "success": true
+    }
+  },
+  "payment_method_added": false,
+  "is_template_has": false,
+  "is_message_tested": false,
+  "is_profile_picture_added": false,
+  "onboarding_steps_completed": 1
+}
