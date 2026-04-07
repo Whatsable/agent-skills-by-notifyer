@@ -4,14 +4,15 @@ description: >
   Create and manage a Notifyer by WhatsAble account — signup, login, retrieve the
   authenticated user, check WhatsApp connection status, manage subscription plans,
   manage team members, assign roles, configure workspace labels, manage WhatsApp
-  message templates, and create and manage AI bots. Use this skill any time you need
-  to authenticate against the Notifyer Console API, set up a new workspace, prepare
-  templates for broadcasts, or configure AI bots for automated chat handling.
+  message templates, create and manage AI bots, and create and manage WhatsApp
+  broadcasts. Use this skill any time you need to authenticate against the Notifyer
+  Console API, set up a new workspace, prepare templates, configure AI bots for
+  automated chat handling, or schedule a bulk WhatsApp broadcast campaign.
 license: Proprietary — © WhatsAble. All rights reserved.
 compatibility: Requires Node.js >= 18. Set NOTIFYER_API_BASE_URL and NOTIFYER_API_TOKEN environment variables before running any script.
 metadata:
   author: whatsable
-  version: "0.3.0"
+  version: "0.4.0"
   product: Notifyer by WhatsAble
   api-base: https://api.insightssystem.com
 ---
@@ -291,6 +292,95 @@ For non-text types (`image`, `document`, `video`), pass a public media URL via
 `--media-url`. The script auto-uploads it to get a handle before submitting.
 Supported formats: PNG/JPG (image), MP4 (video), PDF (document).
 
+### List broadcasts
+
+```bash
+node scripts/list-broadcasts.js                          # upcoming (default)
+node scripts/list-broadcasts.js --status previous        # completed broadcasts
+node scripts/list-broadcasts.js --status ongoing         # currently sending
+node scripts/list-broadcasts.js --status upcoming --pretty
+```
+
+Returns `{ status, broadcasts: Broadcast[], count: n }`.
+Each broadcast has `id`, `broadcast_name`, `template_name`, `unique_numbers`, `delivery_mode`,
+`delivery_size`, `schedule` (Unix ms timestamp), `broadcast_identifier`, `cost_of_broadcast`,
+`user_selected_read_rate`.
+Previous and ongoing additionally include `delivery_success`, `delivery_fail`,
+`message_send_count`, `message_read_count`, `batch_percentage`.
+
+### Get a single broadcast
+
+```bash
+node scripts/get-broadcast.js --id 5
+node scripts/get-broadcast.js --name "January Sale"
+node scripts/get-broadcast.js --broadcast-id "uuid..."
+node scripts/get-broadcast.js --id 5 --status previous --pretty
+
+# Search within a specific status group (faster — 1 API call instead of 3):
+node scripts/get-broadcast.js --id 5 --status upcoming
+```
+
+Searches across all three status groups (upcoming → previous → ongoing) unless `--status`
+is provided. Returns `{ found_in, broadcast }` for the first match.
+Returns `{ ok: false, error: "No broadcast found..." }` if no match.
+
+### Create and schedule a broadcast (3-step flow)
+
+A broadcast requires three sequential API calls linked by a shared `broadcast_identifier`
+UUID. `create-broadcast.js` handles all three steps in one command.
+
+```bash
+# Smart delivery (batched, auto-paced)
+node scripts/create-broadcast.js \
+  --name "January Sale" \
+  --template-id 42 \
+  --test-phone "+14155550123" \
+  --recipients ./recipients.csv \
+  --schedule "25/01/2025 14:00" \
+  --delivery-mode smart \
+  --delivery-size 4 \
+  --read-rate 95
+
+# Regular batching
+node scripts/create-broadcast.js \
+  --name "Order Update" \
+  --template-id 42 \
+  --test-phone "+14155550123" \
+  --variables '{"1":"John","2":"#123"}' \
+  --recipients ./recipients.csv \
+  --schedule "25/01/2025 09:00" \
+  --delivery-mode regular \
+  --delivery-size 10
+
+# Risk mode (no batching — use only for small audiences)
+node scripts/create-broadcast.js \
+  --name "Urgent Alert" \
+  --template-id 42 \
+  --test-phone "+14155550123" \
+  --recipients ./recipients.csv \
+  --schedule "25/01/2025 10:00" \
+  --delivery-mode risk
+```
+
+**The 3 steps executed internally:**
+1. `POST /api:6_ZYypAc/broadcast_test` — sends a real WhatsApp test message to `--test-phone`,
+   initialises the `broadcast_schedule` record
+2. `POST /api:6_ZYypAc/broadcast_user_recipient_numbers` — uploads the CSV (multipart),
+   Xano deduplicates numbers and calculates cost
+3. `POST /api:6_ZYypAc/broadcast_schedule` — finalises delivery settings and schedules the job
+
+Returns `{ broadcast_identifier, test, recipients, schedule }` on success.
+Each step is shown via stderr progress messages.
+
+**Recipient CSV format:**
+```csv
+phone_number,body1,body2
+14155550101,John,12345
+14155550102,Jane,67890
+```
+Phone numbers must NOT include `+`. Variable columns: `body1`, `body2`, `body3`,
+`media`, `button_dynamic_url_value`.
+
 ### List AI bots
 
 ```bash
@@ -501,6 +591,42 @@ Returns `{ ok: true, data: { id, name, email, role, phone_number, ... } }`.
   registration. Meta rate-limits this per day. If you see a daily limit error,
   wait 24 hours.
 
+- **All broadcast endpoints require `Origin: https://console.notifyer-systems.com` header** —
+  every `/api:6_ZYypAc` endpoint runs `/cors_origin_console` as its first step. Scripts
+  send this header automatically via `extraHeaders`.
+- **Broadcasts are a 3-step process** — `create-broadcast.js` handles all three steps:
+  (1) `POST /broadcast_test` → initialises record + sends test message,
+  (2) `POST /broadcast_user_recipient_numbers` → uploads recipient CSV (multipart),
+  (3) `POST /broadcast_schedule` → finalises delivery settings.
+  The three steps are linked by a `broadcast_identifier` UUID generated client-side.
+- **Step 1 sends a real WhatsApp message** — `broadcast_test` delivers an actual test
+  message to `--test-phone`. Always use a number you can verify. The test is mandatory
+  because it creates the `broadcast_schedule` record that steps 2 and 3 update.
+- **Schedule string is timezone-sensitive** — Xano does an IP Address Lookup to resolve
+  the caller's timezone. `"25/01/2025 14:00"` means 2:00 PM in the timezone of the
+  machine running the script. Verify the scheduled time in the console after scheduling.
+- **Schedule format is strictly `DD/MM/YYYY HH:mm`** — ISO 8601 is not accepted. Example:
+  `"25/01/2025 14:00"`. The script validates this format before calling the API.
+- **Risk mode has no batching** — `delivery_mode: "risk"` sends all messages at once.
+  Do not pass `--delivery-size` for risk mode. Use only for small, urgent audiences — large
+  risk sends can trigger Meta's spam detection and disable the WhatsApp number.
+- **Recipient CSV is re-uploadable** — uploading a new CSV to the same `broadcast_identifier`
+  automatically deletes the previous recipient list before processing the new one.
+- **Phone numbers in CSV must NOT include `+`** — Xano parses numbers from the CSV
+  and formats them internally. Pass `14155550101` not `+14155550101`.
+- **`GET /download` returns CSV, not JSON** — use raw `fetch` with `response.text()`
+  or `response.blob()` for the download endpoint. `required` values: `"success"`,
+  `"fail"`, `"on_queue"`.
+- **`DELETE /broadcast/:id` cascades** — deleting a broadcast also bulk-deletes all
+  associated recipient phone numbers from `user's_recipient_phone_numbers`.
+- **`DELETE /broadcast/:id` has no user auth check** — the delete endpoint does not
+  call `/get_user`. Auth relies on the CORS origin check only. Use with caution.
+- **`broadcast_test` returns HTTP 200 even on failure** — check `response.success`.
+  If `false`, inspect `response.whatsapp_response_info.error_data.details` for the
+  Meta error message. `create-broadcast.js` detects and surfaces this automatically.
+- **`get-broadcast.js` searches all 3 status groups** — there is no GET-by-ID endpoint.
+  The script fetches upcoming, previous, and ongoing in sequence and returns the first
+  match. Use `--status` to restrict to a single group for faster lookups.
 - **AI Bots require Pro or Agency plan** — on Basic plan the workspace has no OpenAI API key
   configured, so `create-bot.js` will always fail (OpenAI returns non-200). Verify with
   `get-user-plan.js` before directing a user to create bots.
@@ -541,6 +667,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 | Web/Console | `/api:bVXsw_FD` | Label CRUD (`/web/label_management`), recipients, team |
 | Roles | `/api:eWoClqoZ` | Get available label names for member assignment |
 | AI Config | `/api:Sc_sezER` | Bots |
+| Broadcasts | `/api:6_ZYypAc` | Broadcast test, recipient upload, schedule, list, delete, download |
 | Templates | `/api:AFRA_QCy` | Template create, list, delete |
 | Media Upload | `/api:ox_LN9zX` | Pre-upload media files for non-text templates |
 | Broadcast | `/api:hFrjh8a1` | Send broadcasts |
@@ -577,6 +704,9 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 | `scripts/list-bots.js` | `GET /api:Sc_sezER/ai_config` — list all AI bots in the workspace |
 | `scripts/get-bot.js` | `GET /api:Sc_sezER/ai_config/:id` — retrieve a single AI bot by numeric ID |
 | `scripts/create-bot.js` | `POST /api:Sc_sezER/ai_config` — create an AI bot (internally creates an OpenAI Assistant) |
+| `scripts/list-broadcasts.js` | `GET /api:6_ZYypAc/broadcast?require=…` — list broadcasts by status: upcoming, previous, or ongoing |
+| `scripts/get-broadcast.js` | fetch-then-filter — retrieve a single broadcast by id, name, or broadcast_identifier |
+| `scripts/create-broadcast.js` | 3-step flow: broadcast_test → upload CSV → broadcast_schedule — create and schedule a broadcast |
 <!-- FILE MAP END -->
 
 ## References
@@ -589,6 +719,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 - `references/api-key-reference.md` — Developer API key retrieval, all three auth modes, and `send_template_message_by_api` reference for Make/Zapier/n8n
 - `references/templates-reference.md` — Template data model, all endpoints, name rules, categories, media upload, button shapes, status lifecycle, body variables
 - `references/bots-reference.md` — AI Bot data model, all CRUD endpoints, OpenAI integration, file upload, set-as-default, plan requirements, bot-assignment in chat
+- `references/broadcasts-reference.md` — Full 3-step broadcast workflow, all `/api:6_ZYypAc` endpoints, data model, delivery modes, CSV format, timezone handling, download endpoint
 
 ## Assets
 
@@ -601,8 +732,8 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 [setup-notifyer file map]|root: .
 |.:{package.json,SKILL.md}
 |assets:{connection-status-example.json,signup-example.json,user-plan-example.json}
-|references:{account-reference.md,api-key-reference.md,bots-reference.md,labels-reference.md,plans-reference.md,team-reference.md,templates-reference.md,whatsapp-connection-reference.md}
-|scripts:{create-account.js,create-bot.js,create-label.js,create-template.js,delete-label.js,get-api-key.js,get-bot.js,get-connection-status.js,get-me.js,get-template.js,get-user-plan.js,invite-member.js,list-bots.js,list-labels.js,list-members.js,list-plans.js,list-templates.js,login.js,refresh-connection.js,remove-member.js,update-label-keywords.js,update-member.js}
+|references:{account-reference.md,api-key-reference.md,bots-reference.md,broadcasts-reference.md,labels-reference.md,plans-reference.md,team-reference.md,templates-reference.md,whatsapp-connection-reference.md}
+|scripts:{create-account.js,create-bot.js,create-broadcast.js,create-label.js,create-template.js,delete-label.js,get-api-key.js,get-bot.js,get-broadcast.js,get-connection-status.js,get-me.js,get-template.js,get-user-plan.js,invite-member.js,list-bots.js,list-broadcasts.js,list-labels.js,list-members.js,list-plans.js,list-templates.js,login.js,refresh-connection.js,remove-member.js,update-label-keywords.js,update-member.js}
 |scripts/lib:{args.js,notifyer-api.js,result.js}
 ```
 <!-- FILEMAP:END -->
