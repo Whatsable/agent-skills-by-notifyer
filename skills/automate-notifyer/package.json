@@ -1,0 +1,13 @@
+{
+  "name": "automate-notifyer",
+  "version": "0.1.0",
+  "description": "Scripts for building automation infrastructure on Notifyer — templates, AI bots, and broadcasts",
+  "type": "module",
+  "scripts": {
+    "update-filemap": "node ../../update-skill-filemap.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
