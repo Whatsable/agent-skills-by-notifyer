@@ -581,6 +581,18 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 - `assets/template-create-example.json` — Example payloads for `create-template.js` — text with variables, image with buttons, and AUTHENTICATION type
 - `assets/broadcast-create-example.json` — CLI flag reference and success response shape for `create-broadcast.js`, plus delivery mode and CSV rules
 
+## Limitations
+
+- **Template approval by Meta takes 24–72 hours.** `create-template.js` submits the template to Meta. It cannot be used for messaging until status changes from `PENDING` to `APPROVED`. This cannot be expedited via API.
+- **Templates cannot be edited after approval.** If changes are needed, create a new template with a different name. There is no update-template script (Meta does not allow it).
+- **Broadcasts cannot be cancelled or deleted once scheduled.** There is no delete-broadcast endpoint in the Notifyer API.
+- **AI Bot creation requires an OpenAI API key configured in Notifyer settings.** `create-bot.js` will fail if the workspace has no valid OpenAI key. This is set in the Notifyer console, not via script.
+- **Broadcast CSV recipients must use integer phone numbers (no `+` prefix).** The Xano broadcast endpoint rejects formatted phone strings.
+- **Analytics data may have a reporting delay.** `get-message-analytics.js` reflects data as processed by Notifyer's backend — real-time counts may differ slightly.
+- **Message logs (`get-message-logs.js`) only cover automation and broadcast sends.** Chat messages sent manually or via `chat-notifyer` scripts are not in this log. Use `chat-notifyer/get-conversation-log.js` for those.
+- **IO webhook `id` is a text UUID, not an integer.** Unlike dev webhook IDs. All IO webhook scripts handle this correctly — but external tools must treat the ID as a string.
+- **`DELETE /webhook/dev/:id` is a public endpoint (no user auth check).** It relies only on the CORS origin check. Do not expose dev webhook IDs to untrusted parties.
+
 <!-- FILEMAP:BEGIN -->
 ```text
 [automate-notifyer file map]|root: .

@@ -396,6 +396,16 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 - `assets/connection-status-example.json` — Example connection status response
 - `assets/user-plan-example.json` — Example response from `get-user-plan.js`
 
+## Limitations
+
+- **WhatsApp initial connection requires a browser.** The QR scan / embedded signup flow (WABA onboarding) cannot be scripted. An admin must complete it once via the Notifyer console UI (console.notifyer-systems.com). After that, `get-connection-status.js` and `refresh-connection.js` can manage the connection programmatically.
+- **WhatsApp Business Account (WABA) and Meta Business Suite setup must be done manually.** Phone number registration, business verification, and WABA approval are Meta-side processes outside the Notifyer API.
+- **Account creation is irreversible via script.** `create-account.js` creates a full Notifyer workspace. There is no delete-account endpoint.
+- **Password recovery must be done via the Notifyer web UI.** There is no password reset API endpoint.
+- **`refresh-connection.js` re-syncs an existing connection.** It cannot re-initiate a fully disconnected or revoked WABA — that requires going through the browser-based embedded signup again.
+- **Plan upgrades/downgrades must be done in the Notifyer console UI.** `list-plans.js` and `get-user-plan.js` are read-only — there is no API to change the active plan.
+- **Super Admin role cannot be assigned via script.** Only Admin and Team Member roles are assignable through `update-member.js`. Super Admin is set by Notifyer at workspace creation.
+
 <!-- FILEMAP:BEGIN -->
 ```text
 [setup-notifyer file map]|root: .

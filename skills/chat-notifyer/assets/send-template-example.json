@@ -1,0 +1,79 @@
+{
+  "_comment": "Example payload for send-template.js. Pass --variables with the JSON object below.",
+  "_usage": "node scripts/send-template.js --phone 14155550123 --template tmpl_abc123 --variables '{\"body1\":\"John\",\"body2\":\"#12345\"}' --pretty",
+
+  "examples": [
+    {
+      "description": "Simple text template with 2 body variables",
+      "flags": {
+        "--phone": "14155550123",
+        "--template": "tmpl_abc123",
+        "--variables": "{\"body1\":\"John\",\"body2\":\"#12345\"}"
+      },
+      "variables_object": {
+        "body1": "John",
+        "body2": "#12345"
+      }
+    },
+    {
+      "description": "Template with image header (m_1) and body variable",
+      "flags": {
+        "--phone": "14155550123",
+        "--template": "tmpl_def456",
+        "--variables": "{\"m_1\":\"https://example.com/invoice.jpg\",\"body1\":\"January\"}"
+      },
+      "variables_object": {
+        "m_1": "https://example.com/invoice.jpg",
+        "body1": "January"
+      }
+    },
+    {
+      "description": "Template with dynamic URL button",
+      "flags": {
+        "--phone": "14155550123",
+        "--template": "tmpl_ghi789",
+        "--variables": "{\"body1\":\"your order\",\"visit_website\":\"https://track.example.com/ORD-123\"}"
+      },
+      "variables_object": {
+        "body1": "your order",
+        "visit_website": "https://track.example.com/ORD-123"
+      }
+    },
+    {
+      "description": "Scheduled template (5 Jan 2025 at 10:00)",
+      "flags": {
+        "--phone": "14155550123",
+        "--template": "tmpl_abc123",
+        "--variables": "{\"body1\":\"John\"}",
+        "--schedule": "05/01/2025 10:00"
+      },
+      "variables_object": {
+        "body1": "John"
+      }
+    },
+    {
+      "description": "No-variable template (send as-is)",
+      "flags": {
+        "--phone": "14155550123",
+        "--template": "tmpl_xyz000"
+      },
+      "variables_object": {}
+    }
+  ],
+
+  "variable_keys": {
+    "body1": "Maps to {{1}} in the template body",
+    "body2": "Maps to {{2}} in the template body",
+    "body3": "Maps to {{3}} in the template body",
+    "m_1": "Media URL for image/video/document header",
+    "visit_website": "Dynamic URL for 'Visit Website' button",
+    "button_dynamic_url_value": "Alternative key for button URL"
+  },
+
+  "how_to_get_template_id": [
+    "Run: node ../automate-notifyer/scripts/list-templates.js --pretty",
+    "Copy the template_id string from the output",
+    "Use that string as the --template flag value",
+    "Note: --template expects template_id (the string ID), NOT the template name"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "chat-notifyer",
+  "version": "0.1.0",
+  "description": "Live chat operations for Notifyer by WhatsAble — send messages, manage recipients, assign labels, control AI handoff, schedule messages, and manage notes via the Chat API.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "check": "node --check scripts/list-recipients.js && node --check scripts/get-recipient.js && node --check scripts/filter-recipients-by-label.js && node --check scripts/send-text.js && node --check scripts/send-template.js && node --check scripts/send-attachment.js && node --check scripts/assign-label.js && node --check scripts/remove-label.js && node --check scripts/set-handoff.js && node --check scripts/assign-bot.js && node --check scripts/list-bots.js && node --check scripts/list-scheduled.js && node --check scripts/delete-scheduled.js && node --check scripts/add-note.js && node --check scripts/get-notes.js && node --check scripts/get-conversation-log.js && node --check scripts/update-recipient.js && echo 'All scripts OK'"
+  },
+  "keywords": [
+    "notifyer",
+    "whatsable",
+    "whatsapp",
+    "chat",
+    "agent-skills",
+    "openclaw"
+  ],
+  "author": "WhatsAble",
+  "license": "UNLICENSED"
+}
