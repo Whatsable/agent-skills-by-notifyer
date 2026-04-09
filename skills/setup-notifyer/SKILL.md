@@ -75,6 +75,24 @@ node scripts/get-me.js
 
 Returns `{ ok: true, data: { id, name, email, role, phone_number, ... } }`.
 
+### Run a pre-flight health check (start here when debugging)
+
+```bash
+node scripts/doctor.js
+node scripts/doctor.js --pretty   # human-readable pass/fail report to stderr
+```
+
+Validates all four prerequisites in one command:
+1. `NOTIFYER_API_BASE_URL` — set and starts with `https://`
+2. Token (`NOTIFYER_API_TOKEN`) — valid and accepted by `/auth/me`
+3. WhatsApp connection — `isConnected: true` (and detects degraded Meta states)
+4. Plan status — subscription is `active`, `trialing`, or `new_user`
+
+Returns `{ ok: true, data: { all_healthy: true, checks: { base_url, token, connection, plan } } }`.
+Returns `{ ok: false, ... }` (exit 1) if any check fails, with a `fix` hint for each failure.
+
+**Run `doctor.js` before any other script when troubleshooting unexpected failures.**
+
 ### Check WhatsApp connection status
 
 ```bash
@@ -82,12 +100,17 @@ node scripts/get-connection-status.js
 node scripts/get-connection-status.js --pretty   # human-readable summary to stderr
 ```
 
-Returns `{ ok: true, data: { isConnected, has_embedded_user, registration, subscription,
-payment_method_added, is_template_has, is_message_tested, is_profile_picture_added,
-onboarding_steps_completed } }`.
+Returns `{ ok: true, data: { isConnected, degraded, meta_errors, has_embedded_user,
+registration, subscription, payment_method_added, is_template_has, is_message_tested,
+is_profile_picture_added, onboarding_steps_completed } }`.
 
 `isConnected = true` means the phone number has both successful Meta registration and
 subscription — it is ready to send messages.
+
+`degraded = true` means `isConnected` is true but Meta returned hidden errors inside
+the `whatsapp_response` payload (e.g. two-step PIN mismatch, account restricted). Always
+check `degraded` alongside `isConnected` — a degraded connection may fail silently.
+`meta_errors` contains the extracted error details as a string array.
 
 ### Force-refresh WhatsApp registration status with Meta
 
@@ -303,10 +326,12 @@ header (no `Bearer` prefix) — different from `NOTIFYER_API_TOKEN`.
   lowercase, number, and special character (e.g. `@!#$%^&*`).
 - **Email is lowercased** — the frontend lowercases email before sending.
   Scripts do the same automatically.
-- **Login `Origin` header** — the Xano login endpoint reads
-  `$http_headers.Origin` and validates Admin/Super Admin users against
-  `https://console.notifyer-systems.com`. All login scripts always send this
-  header so Admin logins work correctly from scripts.
+- **`Origin` header is injected automatically.** `notifyer-api.js` adds
+  `Origin: https://console.notifyer-systems.com` for console-mode requests and
+  `Origin: https://chat.notifyer-systems.com` for chat-mode requests. You never need
+  to pass it manually. If a script sets `Origin` via `extraHeaders`, that value
+  takes precedence. This fixes a class of silent 401s that occurred when the header
+  was missing on Xano endpoints that validate it.
 - **Token storage** — store `authToken` in `NOTIFYER_API_TOKEN`. Never commit
   tokens to source control.
 - **Duplicate email** — signup fails with a Xano precondition error if the
@@ -379,6 +404,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 | `scripts/update-label-keywords.js` | `PATCH /api:bVXsw_FD/web/label_management/:id` — update name or keywords (fetch-then-patch) |
 | `scripts/delete-label.js` | `DELETE /api:bVXsw_FD/web/label_management/:id` — permanently delete a label |
 | `scripts/get-api-key.js` | `GET /api:-4GSCDHb/api_key` — retrieve the Developer API key for Make/Zapier/n8n |
+| `scripts/doctor.js` | Pre-flight health check — validates base URL, token, WhatsApp connection, and plan status in one command |
 <!-- FILE MAP END -->
 
 ## References
@@ -422,7 +448,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 |.:{package.json,SKILL.md}
 |assets:{connection-status-example.json,signup-example.json,user-plan-example.json}
 |references:{account-reference.md,api-key-reference.md,labels-reference.md,plans-reference.md,team-reference.md,whatsapp-connection-reference.md}
-|scripts:{create-account.js,create-label.js,delete-label.js,get-api-key.js,get-connection-status.js,get-me.js,get-user-plan.js,invite-member.js,list-labels.js,list-members.js,list-plans.js,login.js,refresh-connection.js,remove-member.js,update-label-keywords.js,update-member.js}
+|scripts:{create-account.js,create-label.js,delete-label.js,doctor.js,get-api-key.js,get-connection-status.js,get-me.js,get-user-plan.js,invite-member.js,list-labels.js,list-members.js,list-plans.js,login.js,refresh-connection.js,remove-member.js,update-label-keywords.js,update-member.js}
 |scripts/lib:{args.js,notifyer-api.js,result.js}
 ```
 <!-- FILEMAP:END -->

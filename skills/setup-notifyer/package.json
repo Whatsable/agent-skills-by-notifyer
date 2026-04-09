@@ -4,6 +4,7 @@
   "description": "Scripts for setting up and managing a Notifyer account — signup, login, team, roles, labels, API keys",
   "type": "module",
   "scripts": {
+    "check": "node --check scripts/create-account.js && node --check scripts/login.js && node --check scripts/get-me.js && node --check scripts/get-connection-status.js && node --check scripts/refresh-connection.js && node --check scripts/list-plans.js && node --check scripts/get-user-plan.js && node --check scripts/list-members.js && node --check scripts/invite-member.js && node --check scripts/update-member.js && node --check scripts/remove-member.js && node --check scripts/list-labels.js && node --check scripts/create-label.js && node --check scripts/update-label-keywords.js && node --check scripts/delete-label.js && node --check scripts/get-api-key.js && node --check scripts/doctor.js && echo 'All scripts OK'",
     "update-filemap": "node ../../update-skill-filemap.mjs"
   },
   "engines": {

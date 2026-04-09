@@ -16,6 +16,9 @@
 export const AUTH_MODE_CONSOLE = "console";
 export const AUTH_MODE_CHAT = "chat";
 
+export const CONSOLE_ORIGIN = "https://console.notifyer-systems.com";
+export const CHAT_ORIGIN = "https://chat.notifyer-systems.com";
+
 /**
  * Load and validate configuration from environment variables.
  *
@@ -70,7 +73,53 @@ function authHeader(config) {
 }
 
 /**
+ * Build a human-readable diagnostic hint for a failed HTTP response.
+ * Surfaces common causes so agents and humans don't have to guess.
+ *
+ * @param {number} status
+ * @param {string} rawMessage
+ * @returns {string}
+ */
+function diagnosticHint(status, rawMessage) {
+  switch (status) {
+    case 401:
+      return (
+        rawMessage +
+        " — Token may be expired or missing. Re-run: node scripts/login.js" +
+        " and export NOTIFYER_API_TOKEN=<authToken>"
+      );
+    case 403:
+      return (
+        rawMessage +
+        " — Insufficient permissions. Check that your account role allows this action."
+      );
+    case 404:
+      return (
+        rawMessage +
+        " — Resource not found. Verify the ID or phone number exists in your workspace."
+      );
+    case 422:
+      return (
+        rawMessage +
+        " — Validation error. Check the request parameters match the expected format."
+      );
+    default:
+      if (status >= 500) {
+        return (
+          rawMessage +
+          " — Notifyer API server error. Wait a moment and try again."
+        );
+      }
+      return rawMessage;
+  }
+}
+
+/**
  * Make a JSON API request and return a structured result.
+ *
+ * Origin header is injected automatically based on auth mode
+ * (console → console.notifyer-systems.com, chat → chat.notifyer-systems.com)
+ * unless the caller has already set it in extraHeaders.
  *
  * @param {{ baseUrl: string, token: string|null, authMode: string }} config
  * @param {{
@@ -106,9 +155,14 @@ export async function requestJson(config, options) {
     if (qs) url += `?${qs}`;
   }
 
+  // Auto-inject Origin based on auth mode; caller's extraHeaders take precedence.
+  const defaultOrigin =
+    config.authMode === AUTH_MODE_CHAT ? CHAT_ORIGIN : CONSOLE_ORIGIN;
+
   const headers = {
     "Content-Type": "application/json",
     Accept: "application/json",
+    Origin: defaultOrigin,
     ...extraHeaders,
   };
 
@@ -123,7 +177,12 @@ export async function requestJson(config, options) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (e) {
-    return { ok: false, error: `Network error: ${e.message}` };
+    return {
+      ok: false,
+      error:
+        `Network error: ${e.message} — ` +
+        "Check that NOTIFYER_API_BASE_URL is correct and the host is reachable.",
+    };
   }
 
   let responseBody;
@@ -139,11 +198,16 @@ export async function requestJson(config, options) {
   }
 
   if (!res.ok) {
-    const message =
+    const rawMessage =
       (typeof responseBody === "object" && responseBody?.message) ||
       (typeof responseBody === "string" && responseBody) ||
       `HTTP ${res.status}`;
-    return { ok: false, error: message, status: res.status, data: responseBody };
+    return {
+      ok: false,
+      error: diagnosticHint(res.status, rawMessage),
+      status: res.status,
+      data: responseBody,
+    };
   }
 
   return { ok: true, data: responseBody };

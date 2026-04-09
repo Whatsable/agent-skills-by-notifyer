@@ -152,6 +152,16 @@ cd skills/setup-notifyer
 node scripts/<script>.js [flags]
 ```
 
+### Pre-flight Health Check
+
+| Script | Description |
+|--------|-------------|
+| `doctor.js` | Validate base URL, token, WhatsApp connection, and plan in one command |
+
+```bash
+node scripts/doctor.js --pretty   # run this first when debugging unexpected failures
+```
+
 ### Account
 
 | Script | Description |
@@ -550,12 +560,16 @@ node scripts/get-message-logs.js --filter broadcast --pretty
 Before any automation sends a message, an agent should gate on:
 
 ```bash
-node scripts/get-connection-status.js   # WhatsApp connected?
-node scripts/get-user-plan.js           # subscription active, within limits?
+# One-command health check (validates token, connection, and plan simultaneously):
+cd skills/setup-notifyer
+node scripts/doctor.js --pretty
+
+# Then check the specific recipient's 24h window:
+cd ../chat-notifyer
 node scripts/get-recipient.js --phone <n> --pretty  # 24h window open?
 ```
 
-This prevents failed sends and surfaces issues (stale connection, expired subscription, closed window) proactively.
+This prevents failed sends and surfaces issues (expired token, stale connection, expired subscription, closed window) proactively. The `doctor.js` output includes a `fix` hint for every failing check.
 
 ---
 
@@ -578,11 +592,17 @@ node scripts/list-webhooks.js --type io --pretty
 ### Workspace Health Check
 
 ```bash
-node scripts/get-me.js --pretty                  # token valid?
-node scripts/get-connection-status.js --pretty   # WhatsApp live?
+# Quick pre-flight (token + connection + plan in one shot):
+cd skills/setup-notifyer
+node scripts/doctor.js --pretty
+
+# Deep workspace audit:
+node scripts/get-me.js --pretty                  # identity
+node scripts/get-connection-status.js --pretty   # WhatsApp live + degraded check
 node scripts/get-user-plan.js --pretty           # plan active, usage OK?
 node scripts/list-members.js --pretty            # team structure
 node scripts/list-labels.js --pretty             # label inventory
+cd ../automate-notifyer
 node scripts/list-bots.js --pretty               # AI bots active?
 node scripts/list-webhooks.js --type dev --pretty # webhooks configured?
 ```
@@ -640,6 +660,7 @@ agent-skills-by-notifyer/
     │   ├── package.json
     │   ├── scripts/
     │   │   ├── lib/                        ← Shared: notifyer-api.js, args.js, result.js
+    │   │   ├── doctor.js
     │   │   ├── create-account.js
     │   │   ├── login.js
     │   │   ├── get-me.js

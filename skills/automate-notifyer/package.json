@@ -4,6 +4,7 @@
   "description": "Scripts for building automation infrastructure on Notifyer — templates, AI bots, and broadcasts",
   "type": "module",
   "scripts": {
+    "check": "node --check scripts/list-templates.js && node --check scripts/get-template.js && node --check scripts/create-template.js && node --check scripts/delete-template.js && node --check scripts/list-bots.js && node --check scripts/get-bot.js && node --check scripts/create-bot.js && node --check scripts/update-bot.js && node --check scripts/delete-bot.js && node --check scripts/set-default-bot.js && node --check scripts/list-broadcasts.js && node --check scripts/get-broadcast.js && node --check scripts/create-broadcast.js && node --check scripts/delete-broadcast.js && node --check scripts/get-message-analytics.js && node --check scripts/get-message-logs.js && node --check scripts/list-webhooks.js && node --check scripts/create-webhook.js && node --check scripts/update-webhook.js && node --check scripts/delete-webhook.js && echo 'All scripts OK'",
     "update-filemap": "node ../../update-skill-filemap.mjs"
   },
   "engines": {
