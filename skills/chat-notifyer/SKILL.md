@@ -1,26 +1,21 @@
 ---
 name: chat-notifyer
-version: 0.1.0
 description: >
   Live chat operations for Notifyer by WhatsAble. Enables AI agents to operate
   the WhatsApp chat interface: list and search conversations, send text/template/
   attachment messages, assign labels, control AI bot vs. human handoff, schedule
-  messages, and manage recipient notes. Uses the Chat API (raw JWT auth, no Bearer).
-author: WhatsAble
-license: UNLICENSED
-tags:
-  - whatsapp
-  - chat
-  - notifyer
-  - messaging
-  - ai-handoff
-  - labels
-  - scheduling
-runtime: node >= 18
-env:
-  - NOTIFYER_API_BASE_URL
-  - NOTIFYER_API_TOKEN
-  - NOTIFYER_CHAT_ORIGIN
+  messages, and manage recipient notes. Use this skill when you need to interact
+  with active WhatsApp conversations, manage recipients, send messages, handle
+  chat handoff between AI bots and humans, schedule messages, or manage notes.
+  Requires setup-notifyer to be configured first (NOTIFYER_API_TOKEN from login.js).
+license: Proprietary — © WhatsAble. All rights reserved.
+compatibility: Requires Node.js >= 18. Set NOTIFYER_API_BASE_URL and NOTIFYER_API_TOKEN before running any script. Optionally set NOTIFYER_CHAT_ORIGIN (default: https://chat.notifyer-systems.com).
+metadata:
+  author: whatsable
+  version: "0.1.0"
+  product: Notifyer by WhatsAble
+  api-base: https://api.insightssystem.com
+  depends-on: setup-notifyer
 ---
 
 # chat-notifyer
