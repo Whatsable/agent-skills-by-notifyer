@@ -53,7 +53,14 @@ This repository packages Notifyer's full management and chat capabilities as **A
 If your agent supports the AgentSkills format, point it to this repository:
 
 ```bash
+# Interactive — choose which skills to install:
 npx skills add whatsable/agent-skills-by-notifyer
+
+# Install all 3 skills at once (no prompt):
+npx skills add whatsable/agent-skills-by-notifyer --all
+
+# Install a specific skill only:
+npx skills add whatsable/agent-skills-by-notifyer --skill chat-notifyer
 ```
 
 The agent will discover all available skills and load them on demand.
