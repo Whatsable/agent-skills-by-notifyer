@@ -253,10 +253,12 @@ node scripts/<script>.js [flags]
 | `list-templates.js` | List all approved and pending templates |
 | `get-template.js` | Fetch a single template by name or ID |
 | `create-template.js` | Submit a template for Meta approval |
+| `delete-template.js` | Permanently delete a template from Notifyer + Meta (`--confirm` required) |
 
 ```bash
 node scripts/list-templates.js --pretty
 node scripts/create-template.js --name "order_confirm" --category UTILITY --body "Hello {{1}}, your order {{2}} is confirmed." --variables 2
+node scripts/delete-template.js --id 987654321 --confirm   # whatsapp_template_id from list-templates.js
 ```
 
 > **Side effect:** `list-templates.js` auto-syncs PENDING templates from Meta on each call.
@@ -268,10 +270,16 @@ node scripts/create-template.js --name "order_confirm" --category UTILITY --body
 | `list-bots.js` | List all AI bots |
 | `get-bot.js` | Fetch a single bot by ID |
 | `create-bot.js` | Create an AI bot (backed by OpenAI Assistant) |
+| `update-bot.js` | Update bot fields (name, tone, knowledge base, delay, etc.) |
+| `set-default-bot.js` | Set a bot as the workspace default |
+| `delete-bot.js` | Permanently delete a bot + its OpenAI Assistant (`--confirm` required) |
 
 ```bash
 node scripts/list-bots.js --pretty
-node scripts/create-bot.js --name "Support Bot" --instructions "You are a helpful support agent." --model gpt-4o
+node scripts/create-bot.js --name "Support Bot" --mission "Help users with support queries." --tone "Friendly" --default
+node scripts/update-bot.js --id 12 --tone "Professional" --delay 5
+node scripts/set-default-bot.js --id 12
+node scripts/delete-bot.js --id 12 --confirm
 ```
 
 ### Broadcasts
@@ -281,6 +289,7 @@ node scripts/create-bot.js --name "Support Bot" --instructions "You are a helpfu
 | `list-broadcasts.js` | List broadcasts by status (upcoming/previous/ongoing) |
 | `get-broadcast.js` | Fetch a single broadcast by ID or name |
 | `create-broadcast.js` | Create and schedule a broadcast (3-step flow) |
+| `delete-broadcast.js` | Cancel/delete an upcoming broadcast (`--confirm` required) |
 
 ```bash
 node scripts/list-broadcasts.js --require upcoming --pretty
@@ -289,6 +298,7 @@ node scripts/create-broadcast.js \
   --template tmpl_abc123 \
   --recipients recipients.csv \
   --schedule "25/01/2025 10:00"
+node scripts/delete-broadcast.js --id 5 --confirm
 ```
 
 ### Analytics
@@ -422,13 +432,15 @@ node scripts/delete-scheduled.js --id 7 --confirm
 |--------|-------------|
 | `add-note.js` | Set, append, or clear the manual note on a recipient |
 | `get-notes.js` | Read manual + AI-generated notes |
-| `get-conversation-log.js` | Read outbound message history for a phone number |
+| `get-conversation.js` | Read full bidirectional chat thread (sent + received messages) |
+| `get-conversation-log.js` | Read outbound-only send history with delivery status |
 
 ```bash
 node scripts/get-notes.js --phone 14155550123 --pretty
 node scripts/add-note.js --phone 14155550123 --note "VIP — apply 15% discount"
 node scripts/add-note.js --phone 14155550123 --append "Follow up on 15 Feb"
-node scripts/get-conversation-log.js --phone 14155550123 --all --pretty
+node scripts/get-conversation.js --phone 14155550123 --pretty          # full thread (both sides)
+node scripts/get-conversation-log.js --phone 14155550123 --all --pretty # outbound only
 ```
 
 ---
@@ -478,7 +490,8 @@ node scripts/filter-recipients-by-label.js --labels "VIP" --status unread --pret
 # 2. Get full context on a contact
 node scripts/get-recipient.js --phone 14155550123 --pretty
 node scripts/get-notes.js --phone 14155550123 --pretty
-node scripts/get-conversation-log.js --phone 14155550123 --pretty
+node scripts/get-conversation.js --phone 14155550123 --pretty          # full thread (sent + received)
+node scripts/get-conversation-log.js --phone 14155550123 --pretty      # outbound delivery log
 
 # 3. Take over from the bot and respond
 node scripts/set-handoff.js --phone 14155550123 --mode human
@@ -501,11 +514,12 @@ An agent can continuously process incoming conversations:
 1. `list-recipients.js --status unread` — find new conversations
 2. `get-recipient.js` — check 24h window and AI mode status
 3. `get-notes.js` — load context (manual + AI notes)
-4. `get-conversation-log.js` — read recent message history
-5. Decide: escalate, respond, or route
-6. `assign-label.js` — categorise the conversation
-7. `send-template.js` — send an acknowledgement if window is closed
-8. `set-handoff.js --mode human` — escalate complex cases
+4. `get-conversation.js` — read full bidirectional thread (sent + received)
+5. `get-conversation-log.js` — read outbound delivery log
+6. Decide: escalate, respond, or route
+7. `assign-label.js` — categorise the conversation
+8. `send-template.js` — send an acknowledgement if window is closed
+9. `set-handoff.js --mode human` — escalate complex cases
 
 ---
 
@@ -587,7 +601,7 @@ All outputs are structured JSON — trivially pipeable to monitoring tools or da
 | **Plan upgrades/downgrades require the console UI** | Stripe checkout requires a browser redirect. `list-plans.js` and `get-user-plan.js` are read-only. |
 | **Template approval is Meta's process** | `create-template.js` submits to Meta. Approval takes 24–72 hours and cannot be expedited via API. Templates must reach `APPROVED` status before use. |
 | **Templates cannot be edited after approval** | Create a new template with a different name. There is no update-template endpoint. |
-| **Broadcasts cannot be cancelled once scheduled** | No delete-broadcast endpoint exists in the API. |
+| **Deleting a broadcast cannot recall messages already sent** | `delete-broadcast.js` stops future batches but does not undo messages already dispatched. Only use it on upcoming (not yet started) broadcasts. |
 | **AI bot requires OpenAI API key in Notifyer settings** | `create-bot.js` fails if the workspace has no valid OpenAI key — set this in the console UI. |
 | **Password recovery is browser-only** | No password reset API endpoint. |
 
@@ -599,7 +613,7 @@ All outputs are structured JSON — trivially pipeable to monitoring tools or da
 | **Outbound-only message history** | `get-conversation-log.js` shows messages sent by Notifyer. Inbound messages from customers are not in the log — view them in [chat.notifyer-systems.com](https://chat.notifyer-systems.com). |
 | **No bulk send from chat scripts** | For bulk messaging, use `automate-notifyer/create-broadcast.js`. |
 | **`note_auto` (AI note) is read-only** | AI-generated notes are written by Notifyer's internal AI — cannot be set or cleared via API. |
-| **`DELETE /webhook/dev/:id` is a public endpoint** | Relies only on CORS origin check (no user auth). Do not expose dev webhook IDs to untrusted parties. |
+| **`DELETE /webhook/dev/:id` has no server-side user auth in Xano** | `delete-webhook.js` mitigates this with an ownership check (authenticated `GET` before `DELETE`). The raw API endpoint remains public — a Xano-side fix is still recommended. |
 | **IO webhook ID is a text UUID** | Unlike integer dev webhook IDs. Always treat IO webhook IDs as strings. |
 | **No token refresh endpoint** | When the JWT expires (HTTP 401), re-run `login.js` for a fresh token. |
 
@@ -653,12 +667,17 @@ agent-skills-by-notifyer/
     │   │   ├── list-templates.js
     │   │   ├── get-template.js
     │   │   ├── create-template.js
+    │   │   ├── delete-template.js
     │   │   ├── list-bots.js
     │   │   ├── get-bot.js
     │   │   ├── create-bot.js
+    │   │   ├── update-bot.js
+    │   │   ├── delete-bot.js
+    │   │   ├── set-default-bot.js
     │   │   ├── list-broadcasts.js
     │   │   ├── get-broadcast.js
     │   │   ├── create-broadcast.js
+    │   │   ├── delete-broadcast.js
     │   │   ├── get-message-analytics.js
     │   │   ├── get-message-logs.js
     │   │   ├── list-webhooks.js
@@ -689,6 +708,7 @@ agent-skills-by-notifyer/
         │   ├── delete-scheduled.js
         │   ├── add-note.js
         │   ├── get-notes.js
+        │   ├── get-conversation.js
         │   └── get-conversation-log.js
         ├── references/
         └── assets/
