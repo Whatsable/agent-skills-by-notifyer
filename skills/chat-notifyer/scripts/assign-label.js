@@ -57,6 +57,15 @@ import { ok, err, printJson } from "./lib/result.js";
 
 const CHAT_ORIGIN = process.env.NOTIFYER_CHAT_ORIGIN ?? "https://chat.notifyer-systems.com";
 
+async function getUserId(config) {
+  const result = await requestJson(config, {
+    method: "GET",
+    path: "/api:-4GSCDHb/auth/me",
+  });
+  if (!result.ok) return null;
+  return result.data?.user_id ?? result.data?.id ?? null;
+}
+
 async function findRecipient(config, phone) {
   const parts = [
     `page_number=0`,
@@ -77,8 +86,41 @@ async function findRecipient(config, phone) {
     return String(r.phone_number) === String(phone) ||
       String(r.phone_number_string ?? "").replace(/\D/g, "") === String(phone).replace(/\D/g, "");
   });
-  if (!match) return { ok: false, error: `Recipient with phone ${phone} not found.` };
-  return { ok: true, data: match.recipient ?? match };
+  if (match) return { ok: true, data: match.recipient ?? match };
+
+  const userId = await getUserId(config);
+  if (!userId) {
+    return { ok: false, error: `Recipient with phone ${phone} not found (web search empty; could not resolve user for chatapp lookup).` };
+  }
+  const chatResult = await requestJson(config, {
+    method: "GET",
+    path: `/api:bVXsw_FD/chatapp/recipient?phone_number=${encodeURIComponent(String(phone))}&user_id=${userId}`,
+  });
+  if (!chatResult.ok) return { ok: false, error: `Recipient with phone ${phone} not found.` };
+  const raw = Array.isArray(chatResult.data) ? chatResult.data[0] : chatResult.data;
+  if (!raw || (Array.isArray(chatResult.data) && chatResult.data.length === 0)) {
+    return { ok: false, error: `Recipient with phone ${phone} not found.` };
+  }
+  return { ok: true, data: raw };
+}
+
+/** Merge identity fields so PATCH does not null phone/name (Xano partial-patch behaviour). */
+function buildLabelPatchBody(recipient, globalLabel) {
+  const phoneNum = recipient.phone_number;
+  if (phoneNum == null || phoneNum === "") {
+    return { ok: false, error: "Recipient record is missing phone_number; cannot patch safely." };
+  }
+  const body = {
+    name: recipient.name ?? "",
+    phone_number: phoneNum,
+    phone_number_string: recipient.phone_number_string ?? String(phoneNum),
+    note: recipient.note ?? "",
+    global_label: globalLabel,
+  };
+  if (typeof recipient.is_ai_assistant === "boolean") {
+    body.is_ai_assistant = recipient.is_ai_assistant;
+  }
+  return { ok: true, data: body };
 }
 
 async function patchRecipient(config, id, fields) {
@@ -134,7 +176,13 @@ async function main() {
     process.stderr.write(`  After:  [${newLabels.join(", ")}]\n\n`);
   }
 
-  const patchResult = await patchRecipient(config, recipient.id, { global_label: newLabels });
+  const patchFields = buildLabelPatchBody(recipient, newLabels);
+  if (!patchFields.ok) {
+    printJson(err(patchFields.error));
+    return;
+  }
+
+  const patchResult = await patchRecipient(config, recipient.id, patchFields.data);
   if (!patchResult.ok) {
     printJson(err(patchResult.error, patchResult.data, false, patchResult.status));
     return;
