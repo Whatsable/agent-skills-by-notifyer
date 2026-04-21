@@ -1,0 +1,38 @@
+{
+  "name": "automate-notifyer",
+  "tagline": "Build WhatsApp automation — templates, bots, broadcasts, webhooks",
+  "description": "Build automation infrastructure on a Notifyer by WhatsAble account — manage WhatsApp message templates, create and configure AI bots for automated chat handling, create and schedule bulk WhatsApp broadcast campaigns, retrieve messaging analytics and delivery logs, and manage developer webhooks (n8n / Make / Zapier integrations) and IO webhooks. Use this skill after setup-notifyer has been completed.",
+  "category": "productivity",
+  "tags": [
+    "whatsapp",
+    "notifyer",
+    "whatsable",
+    "messaging",
+    "automation",
+    "broadcasts",
+    "templates",
+    "webhooks",
+    "bots",
+    "analytics"
+  ],
+  "version": "0.3.0",
+  "author": "whatsable",
+  "license": "Proprietary",
+  "homepage": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "repository": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "requires": {
+    "node": ">=18"
+  },
+  "env": [
+    {
+      "name": "NOTIFYER_API_BASE_URL",
+      "description": "Base URL for the Notifyer API (e.g. https://api.insightssystem.com)",
+      "required": true
+    },
+    {
+      "name": "NOTIFYER_API_TOKEN",
+      "description": "JWT token obtained from setup-notifyer/login.js. Required for all API calls.",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "setup-notifyer",
+  "tagline": "Authenticate and configure a Notifyer WhatsApp workspace",
+  "description": "Create and manage a Notifyer by WhatsAble account — signup, login, check WhatsApp connection status, manage team members, assign roles, configure workspace labels, and retrieve the Developer API key. Use this skill any time you need to authenticate against the Notifyer Console API, set up a new workspace, or prepare the environment before running automate-notifyer or chat-notifyer.",
+  "category": "productivity",
+  "tags": [
+    "whatsapp",
+    "notifyer",
+    "whatsable",
+    "messaging",
+    "authentication",
+    "workspace",
+    "setup"
+  ],
+  "version": "1.0.0",
+  "author": "whatsable",
+  "license": "Proprietary",
+  "homepage": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "repository": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "requires": {
+    "node": ">=18"
+  },
+  "env": [
+    {
+      "name": "NOTIFYER_API_BASE_URL",
+      "description": "Base URL for the Notifyer API (e.g. https://api.insightssystem.com)",
+      "required": true
+    },
+    {
+      "name": "NOTIFYER_API_TOKEN",
+      "description": "JWT token obtained from login.js. Required for all API calls.",
+      "required": true
+    }
+  ]
+}

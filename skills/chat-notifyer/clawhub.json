@@ -1,0 +1,43 @@
+{
+  "name": "chat-notifyer",
+  "tagline": "Operate WhatsApp live chat — send messages, manage conversations",
+  "description": "Live chat operations for Notifyer by WhatsAble. Enables AI agents to operate the WhatsApp chat interface: list and search conversations, send text/template/attachment messages, assign labels, control AI bot vs. human handoff, schedule messages, and manage recipient notes. Use this skill when you need to interact with active WhatsApp conversations, manage recipients, or handle chat handoff between AI bots and humans.",
+  "category": "productivity",
+  "tags": [
+    "whatsapp",
+    "notifyer",
+    "whatsable",
+    "messaging",
+    "chat",
+    "live-chat",
+    "recipients",
+    "labels",
+    "handoff",
+    "scheduling"
+  ],
+  "version": "0.1.0",
+  "author": "whatsable",
+  "license": "Proprietary",
+  "homepage": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "repository": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "requires": {
+    "node": ">=18"
+  },
+  "env": [
+    {
+      "name": "NOTIFYER_API_BASE_URL",
+      "description": "Base URL for the Notifyer API (e.g. https://api.insightssystem.com)",
+      "required": true
+    },
+    {
+      "name": "NOTIFYER_API_TOKEN",
+      "description": "JWT token obtained from setup-notifyer/login.js. Required for all API calls.",
+      "required": true
+    },
+    {
+      "name": "NOTIFYER_CHAT_ORIGIN",
+      "description": "Optional override for chat CORS origin (default: https://chat.notifyer-systems.com)",
+      "required": false
+    }
+  ]
+}
