@@ -12,7 +12,7 @@ license: Proprietary — © WhatsAble. All rights reserved.
 compatibility: Requires Node.js >= 18. Set NOTIFYER_API_BASE_URL and NOTIFYER_API_TOKEN before running any script.
 metadata:
   author: whatsable
-  version: "0.1.0"
+  version: "0.3.0"
   product: Notifyer by WhatsAble
   api-base: https://api.insightssystem.com
   depends-on: setup-notifyer
@@ -71,7 +71,7 @@ Several endpoints run Xano's `/cors_origin_web_chat` function which allows reque
 - `http://localhost:5173`, `http://localhost:3000`, `http://127.0.0.1:5173`
 
 Scripts automatically send `Origin: https://chat.notifyer-systems.com`.  
-Override with `NOTIFYER_CHAT_ORIGIN` env var.
+Optional: set `NOTIFYER_CHAT_ORIGIN` if you need a different Origin header.
 
 Endpoints that do NOT require CORS: `/chatapp/*` endpoints, `send/text`.
 
@@ -90,7 +90,7 @@ Endpoints that do NOT require CORS: `/chatapp/*` endpoints, `send/text`.
 
 ## 24-Hour Window Rule
 
-**Critical WhatsApp policy:** Free-text messages and attachments can only be sent within 24 hours of the recipient's last inbound message.
+**WhatsApp policy:** Free-text messages and attachments can only be sent within 24 hours of the recipient's last inbound message.
 
 ```
 Window open:   recipient.expiration_timestamp > Date.now()
@@ -102,7 +102,7 @@ Window closed: recipient.expiration_timestamp == null OR < Date.now()
 | Open | Text ✓, Template ✓, Attachment ✓ |
 | Closed | Template only ✓ |
 
-**Always check before sending text/attachments:**
+**Before sending text or attachments, verify the 24-hour window:**
 ```bash
 node scripts/get-recipient.js --phone 14155550123 --pretty
 ```
@@ -292,13 +292,13 @@ node scripts/add-note.js --phone 14155550123 --note ""   # clear note
 
 ## Rules for AI Agents
 
-1. **Auth mode**: Always use raw JWT (`Authorization: <token>`, no `Bearer` prefix) for all chat endpoints in this skill, EXCEPT `list-bots.js` which uses console auth.
+1. **Auth mode**: Use raw JWT (`Authorization: <token>`, no `Bearer` prefix) for all chat endpoints in this skill, except `list-bots.js`, which uses console auth.
 
-2. **Phone numbers**: Always send as integer (no `+` prefix). Parse with `parseInt(phone.replace(/^\+/, ""), 10)`.
+2. **Phone numbers**: Send phone numbers as integers (no `+` prefix). Parse with `parseInt(phone.replace(/^\+/, ""), 10)`.
 
 3. **24h window**: `send-text.js` auto-checks the window and refuses to send if it is closed — no pre-check needed. For attachments, check `expiration_timestamp` via `get-recipient.js`. If window closed, use `send-template.js`.
 
-4. **Fetch before patch**: For label changes, note changes, and bot assignment — always fetch the recipient first to get current state, then PATCH with the full intended state.
+4. **Fetch before patch**: For label changes, note changes, and bot assignment — fetch the recipient first to get current state, then PATCH with the full intended state.
 
 5. **Labels are strings**: `global_label` is a `string[]` of label **names** (not IDs). Send `["Support", "Billing"]` — not `[1, 2]`.
 

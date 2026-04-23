@@ -1,6 +1,6 @@
 {
   "name": "setup-notifyer",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Scripts for setting up and managing a Notifyer account — signup, login, team, roles, labels, API keys",
   "type": "module",
   "scripts": {

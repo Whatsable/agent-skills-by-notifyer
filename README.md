@@ -4,6 +4,8 @@
 
 > **v0.3.0 — All three phases complete.** `setup-notifyer`, `automate-notifyer`, and `chat-notifyer` are all production-ready.
 
+Per-skill versions (kept in sync with each skill’s `package.json`, `SKILL.md` frontmatter, and `clawhub.json`): **setup-notifyer** 1.0.0; **automate-notifyer** and **chat-notifyer** 0.3.0.
+
 Agent Skills for [Notifyer by WhatsAble](https://notifyer-systems.com) — built on the open [AgentSkills](https://agentskills.io) format. These skills teach AI coding agents how to authenticate, configure, and operate a Notifyer workspace programmatically, using the same API surface as the Notifyer Console and Chat applications.
 
 Works across any compatible agent — **OpenClaw, Cursor, Claude Code, GitHub Copilot, Gemini CLI, Amp, Roo Code, Junie, OpenHands**, and [many more](https://agentskills.io).

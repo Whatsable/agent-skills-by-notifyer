@@ -1,6 +1,6 @@
 {
   "name": "chat-notifyer",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Live chat operations for Notifyer by WhatsAble — send messages, manage recipients, assign labels, control AI handoff, schedule messages, and manage notes via the Chat API.",
   "type": "module",
   "engines": {
