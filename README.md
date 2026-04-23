@@ -2,7 +2,7 @@
 
 <img src="https://res.cloudinary.com/subframe/image/upload/v1756457825/uploads/4086/b4ynd9jid16pcby8cfz0.svg" alt="Notifyer by WhatsAble" height="40" />
 
-> **v0.3.0 — All three phases complete.** `setup-notifyer`, `automate-notifyer`, and `chat-notifyer` are all production-ready.
+> **v0.4.0 — Full suite ClawHub release.** `setup-notifyer`, `automate-notifyer`, and `chat-notifyer` are all production-ready.
 
 Per-skill versions (kept in sync with each skill’s `package.json`, `SKILL.md` frontmatter, and `clawhub.json`): **setup-notifyer** 1.0.0; **automate-notifyer** and **chat-notifyer** 0.3.0.
 
