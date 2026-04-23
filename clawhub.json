@@ -1,5 +1,5 @@
 {
-  "name": "agent-skills-by-notifyer",
+  "name": "whatsapp-business-agent-skills",
   "tagline": "Full three-phase agent skill suite for Notifyer by WhatsAble",
   "description": "Complete agent skills suite for Notifyer by WhatsAble covering all three phases of the platform. Phase 1 (setup-notifyer): account signup, login, WhatsApp connection, subscription plans, team members, workspace labels, and Developer API key. Phase 2 (automate-notifyer): WhatsApp message templates, AI bots, bulk broadcast campaigns, messaging analytics, delivery logs, and developer/IO webhooks for Make, Zapier, and n8n. Phase 3 (chat-notifyer): live WhatsApp chat operations including listing conversations, sending text/template/attachment messages, assigning labels, controlling AI bot vs human handoff, scheduling messages, and managing notes. All three phases are bundled together and required for full platform coverage.",
   "category": "productivity",
@@ -24,8 +24,8 @@
   "version": "0.4.0",
   "author": "whatsable",
   "license": "Proprietary",
-  "homepage": "https://github.com/Whatsable/agent-skills-by-notifyer",
-  "repository": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "homepage": "https://github.com/Whatsable/whatsapp-business-agent-skills",
+  "repository": "https://github.com/Whatsable/whatsapp-business-agent-skills",
   "requires": {
     "node": ">=18"
   },

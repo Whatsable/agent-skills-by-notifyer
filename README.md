@@ -56,13 +56,13 @@ If your agent supports the AgentSkills format, point it to this repository:
 
 ```bash
 # Interactive — choose which skills to install:
-npx skills add whatsable/agent-skills-by-notifyer
+npx skills add whatsable/whatsapp-business-agent-skills
 
 # Install all 3 skills at once (no prompt):
-npx skills add whatsable/agent-skills-by-notifyer --all
+npx skills add whatsable/whatsapp-business-agent-skills --all
 
 # Install a specific skill only:
-npx skills add whatsable/agent-skills-by-notifyer --skill chat-notifyer
+npx skills add whatsable/whatsapp-business-agent-skills --skill chat-notifyer
 ```
 
 The agent will discover all available skills and load them on demand.
@@ -70,8 +70,8 @@ The agent will discover all available skills and load them on demand.
 ### Manual clone
 
 ```bash
-git clone https://github.com/Whatsable/agent-skills-by-notifyer
-cd agent-skills-by-notifyer
+git clone https://github.com/Whatsable/whatsapp-business-agent-skills
+cd whatsapp-business-agent-skills
 ```
 
 Each skill is self-contained — no external dependencies. Run scripts directly with Node.js 18+.
@@ -667,7 +667,7 @@ All outputs are structured JSON — trivially pipeable to monitoring tools or da
 ## Repository Structure
 
 ```
-agent-skills-by-notifyer/
+whatsapp-business-agent-skills/
 ├── README.md
 └── skills/
     ├── setup-notifyer/                     ← Phase 1: workspace setup & infra

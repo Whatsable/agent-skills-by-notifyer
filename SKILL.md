@@ -1,5 +1,5 @@
 ---
-name: agent-skills-by-notifyer
+name: whatsapp-business-agent-skills
 description: >
   Full three-phase agent skills suite for Notifyer by WhatsAble. Phase 1 (setup-notifyer):
   account signup, login, WhatsApp connection status, subscription plans, team members,
@@ -11,7 +11,7 @@ description: >
   notes. All three phases are bundled together; each phase depends on the previous one.
 license: Proprietary — © WhatsAble. All rights reserved.
 compatibility: Requires Node.js >= 18. Set NOTIFYER_API_BASE_URL and NOTIFYER_API_TOKEN before running any script. No npm dependencies — uses Node.js built-ins only.
-metadata: {"author":"whatsable","version":"0.4.0","product":"Notifyer by WhatsAble","api-base":"https://api.insightssystem.com","homepage":"https://github.com/Whatsable/agent-skills-by-notifyer","env":"NOTIFYER_API_BASE_URL, NOTIFYER_API_TOKEN"}
+metadata: {"author":"whatsable","version":"0.4.0","product":"Notifyer by WhatsAble","api-base":"https://api.insightssystem.com","homepage":"https://github.com/Whatsable/whatsapp-business-agent-skills","env":"NOTIFYER_API_BASE_URL, NOTIFYER_API_TOKEN"}
 ---
 
 # Notifyer Agent Skills
@@ -20,7 +20,7 @@ Agent skills for [Notifyer by WhatsAble](https://notifyer-systems.com) — three
 together cover the full platform: account setup, automation infrastructure, and live chat
 operations. Scripts are self-contained Node.js 18+ files with no external npm dependencies.
 
-Source repository: <https://github.com/Whatsable/agent-skills-by-notifyer>
+Source repository: <https://github.com/Whatsable/whatsapp-business-agent-skills>
 
 ---
 

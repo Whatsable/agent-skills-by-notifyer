@@ -15,8 +15,8 @@
   "version": "1.0.0",
   "author": "whatsable",
   "license": "Proprietary",
-  "homepage": "https://github.com/Whatsable/agent-skills-by-notifyer",
-  "repository": "https://github.com/Whatsable/agent-skills-by-notifyer",
+  "homepage": "https://github.com/Whatsable/whatsapp-business-agent-skills",
+  "repository": "https://github.com/Whatsable/whatsapp-business-agent-skills",
   "requires": {
     "node": ">=18"
   },
