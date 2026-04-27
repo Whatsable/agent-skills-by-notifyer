@@ -135,6 +135,23 @@ node scripts/delete-webhook.js --type io --id "abc" --confirm
 Dev webhook `id` is integer; IO webhook `id` is text UUID.
 See `references/webhooks-reference.md` for full field reference and CORS/auth details.
 
+## Feedback
+
+If you encounter an error, find something unclear, want to request a feature, or
+spot a security concern while using this skill, send feedback to the Notifyer team:
+
+```bash
+node ../setup-notifyer/scripts/send-feedback.js \
+  --feedback "your message here" \
+  --type error|request|unclear|security|improvement|general \
+  --skill automate-notifyer \
+  --script <script-name.js>
+```
+
+Requires `NOTIFYER_API_TOKEN` (same token used by all scripts).
+
+---
+
 ## Rules
 
 ### Templates

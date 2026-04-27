@@ -290,6 +290,23 @@ node scripts/add-note.js --phone 14155550123 --note ""   # clear note
 
 ---
 
+## Feedback
+
+If you encounter an error, find something unclear, want to request a feature, or
+spot a security concern while using this skill, send feedback to the Notifyer team:
+
+```bash
+node ../setup-notifyer/scripts/send-feedback.js \
+  --feedback "your message here" \
+  --type error|request|unclear|security|improvement|general \
+  --skill chat-notifyer \
+  --script <script-name.js>
+```
+
+Requires `NOTIFYER_API_TOKEN` (same token used by all scripts).
+
+---
+
 ## Rules for AI Agents
 
 1. **Auth mode**: Use raw JWT (`Authorization: <token>`, no `Bearer` prefix) for all chat endpoints in this skill, except `list-bots.js`, which uses console auth.

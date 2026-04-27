@@ -281,6 +281,50 @@ The `api_key` value is the credential used by **Make, Zapier, n8n, and custom sc
 to send messages via the developer API. It authenticates as a **raw `Authorization`**
 header (no `Bearer` prefix) — different from `NOTIFYER_API_TOKEN`.
 
+### Send feedback to the Notifyer team
+
+Use this whenever you encounter an error, find something unclear, want to request
+a feature, or spot a potential security issue.
+
+```bash
+# Report an error you hit
+node scripts/send-feedback.js \
+  --feedback "send-text.js returned 200 but message was not delivered — no error in output" \
+  --type error --skill chat-notifyer --script send-text.js
+
+# Request a missing feature
+node scripts/send-feedback.js \
+  --feedback "Need a script to list all open conversations sorted by last message time" \
+  --type request --skill chat-notifyer
+
+# Flag unclear documentation
+node scripts/send-feedback.js \
+  --feedback "SKILL.md does not explain what happens when recipient_id is missing from send-template" \
+  --type unclear --skill chat-notifyer --script send-template.js
+
+# Report a security concern
+node scripts/send-feedback.js \
+  --feedback "delete-webhook.js endpoint has no server-side auth check in Xano" \
+  --type security --skill automate-notifyer --script delete-webhook.js
+
+# General improvement suggestion
+node scripts/send-feedback.js \
+  --feedback "Pretty output for get-conversation.js would be easier to read with timestamps on each line" \
+  --type improvement --skill chat-notifyer --script get-conversation.js
+```
+
+**`--type` values:** `error` | `request` | `unclear` | `security` | `improvement` | `general`  
+**`--skill`** and **`--script`** are optional but help the team triage the record.
+
+Returns `{ ok: true, data: { id, created_at, user_id, feedback } }` on success.
+
+**When to send feedback — guidance for agents:**
+- A script returns an unexpected error or undocumented response shape
+- An endpoint behaves differently from what `SKILL.md` or the reference docs describe
+- A workflow step is unclear or the documentation is missing information
+- You encounter a potential security issue (wrong auth mode, data exposure, etc.)
+- A feature or endpoint is missing that would improve your ability to complete the task
+
 ## Rules
 
 - **Three distinct auth modes** — Console (`Bearer <jwt>`), Chat (`<jwt>` raw), Developer
@@ -405,6 +449,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 | `scripts/delete-label.js` | `DELETE /api:bVXsw_FD/web/label_management/:id` — permanently delete a label |
 | `scripts/get-api-key.js` | `GET /api:-4GSCDHb/api_key` — retrieve the Developer API key for Make/Zapier/n8n |
 | `scripts/doctor.js` | Pre-flight health check — validates base URL, token, WhatsApp connection, and plan status in one command |
+| `scripts/send-feedback.js` | `POST /api:ox_LN9zX/agent_feedback` — send feedback, error reports, or feature requests to the Notifyer team |
 <!-- FILE MAP END -->
 
 ## References
@@ -449,7 +494,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 |.:{package.json,SKILL.md}
 |assets:{connection-status-example.json,signup-example.json,user-plan-example.json}
 |references:{account-reference.md,api-key-reference.md,labels-reference.md,plans-reference.md,team-reference.md,whatsapp-connection-reference.md}
-|scripts:{create-account.js,create-label.js,delete-label.js,doctor.js,get-api-key.js,get-connection-status.js,get-me.js,get-user-plan.js,invite-member.js,list-labels.js,list-members.js,list-plans.js,login.js,refresh-connection.js,remove-member.js,update-label-keywords.js,update-member.js}
+|scripts:{create-account.js,create-label.js,delete-label.js,doctor.js,get-api-key.js,get-connection-status.js,get-me.js,get-user-plan.js,invite-member.js,list-labels.js,list-members.js,list-plans.js,login.js,refresh-connection.js,remove-member.js,send-feedback.js,update-label-keywords.js,update-member.js}
 |scripts/lib:{args.js,notifyer-api.js,result.js}
 ```
 <!-- FILEMAP:END -->
