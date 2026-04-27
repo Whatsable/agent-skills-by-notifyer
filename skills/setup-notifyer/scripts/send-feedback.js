@@ -31,7 +31,8 @@
  *       "id": "...",
  *       "created_at": 1700000000000,
  *       "user_id": "uuid",
- *       "feedback": "[error] ..."
+ *       "feedback": "[error] message\n\nSkill: chat-notifyer\nScript: send-text.js",
+ *       "category": "error"
  *     }
  *   }
  *
@@ -49,7 +50,9 @@
  * Notes:
  *   - Uses Console auth (Authorization: Bearer <jwt>). Requires NOTIFYER_API_TOKEN.
  *   - `user_id` and `created_at` are populated server-side from the token — not sent
- *     in the request body. The feedback payload only contains the `feedback` text field.
+ *     in the request body.
+ *   - `category` is sent as its own field (maps to the `category` column in Xano).
+ *     The `[tag]` prefix is also kept in the `feedback` text as a human-readable fallback.
  *   - Valid --type values: error, request, unclear, security, improvement, general
  *     Any other value is normalised to "general" to avoid API rejections.
  *   - This script lives in setup-notifyer but applies to all three skills.
@@ -99,19 +102,36 @@ Examples:
 }
 
 /**
- * Build a structured feedback string from the user's input.
- * The Xano table has a single `feedback` text column, so all context
- * is embedded in the string body for easy review in the data table.
+ * Normalise --type to a valid category value.
+ * Falls back to "general" for any unrecognised input so the API never rejects.
+ *
+ * @param {string|null} type
+ * @returns {string}
+ */
+function normaliseCategory(type) {
+  const t = type?.toLowerCase()?.trim();
+  return VALID_TYPES.includes(t) ? t : "general";
+}
+
+/**
+ * Build the structured `feedback` text body.
+ * The `[tag]` prefix is kept in the text as a human-readable fallback even
+ * though `category` is now stored in its own column.
  *
  * Format:
- *   [type] feedback message
+ *   [category] feedback message
  *
  *   Skill: <skill>
  *   Script: <script>
+ *
+ * @param {string} feedback
+ * @param {string} category  already normalised
+ * @param {string|null} skill
+ * @param {string|null} script
+ * @returns {string}
  */
-function buildFeedbackPayload(feedback, type, skill, script) {
-  const tag = VALID_TYPES.includes(type?.toLowerCase()) ? type.toLowerCase() : "general";
-  const lines = [`[${tag}] ${feedback.trim()}`];
+function buildFeedbackText(feedback, category, skill, script) {
+  const lines = [`[${category}] ${feedback.trim()}`];
 
   const meta = [];
   if (skill) meta.push(`Skill: ${skill}`);
@@ -139,12 +159,16 @@ async function main() {
 
   const config = loadConfig({ requireToken: true });
 
-  const payload = buildFeedbackPayload(feedback, type, skill, script);
+  const category = normaliseCategory(type);
+  const feedbackText = buildFeedbackText(feedback, category, skill, script);
 
   const result = await requestJson(config, {
     method: "POST",
     path: "/api:ox_LN9zX/agent_feedback",
-    body: { feedback: payload },
+    body: {
+      feedback: feedbackText,  // full structured text with [tag] prefix + context lines
+      category,                // separate column for filtering/automations in Xano
+    },
   });
 
   if (!result.ok) {
@@ -156,8 +180,9 @@ async function main() {
     process.stderr.write(`\nFeedback submitted\n`);
     process.stderr.write(`${"─".repeat(60)}\n`);
     process.stderr.write(`ID:         ${rec?.id ?? "(unknown)"}\n`);
+    process.stderr.write(`Category:   ${rec?.category ?? category}\n`);
     process.stderr.write(`Recorded:   ${rec?.created_at ? new Date(rec.created_at).toISOString() : "now"}\n`);
-    process.stderr.write(`\nPayload sent:\n${payload}\n\n`);
+    process.stderr.write(`\nMessage:\n${feedbackText}\n\n`);
   }
 
   printJson(ok(result.data));
