@@ -224,7 +224,69 @@ node scripts/remove-label.js --phone 14155550123 --label "Support" --pretty
 node scripts/filter-recipients-by-label.js --labels "VIP,Support" --pretty
 ```
 
-### Take over a conversation from the AI bot (human handoff)
+### Human handover — when a contact asks to speak to a human agent
+
+**This is the primary escalation workflow. Use it whenever the contact expresses a
+desire to speak with a human — even implicitly (e.g. "I need help", "can someone
+call me", "talk to a person", "agent please", "representative").**
+
+The correct method is to assign the bot's `handoff_label` to the conversation.
+Notifyer automatically sets `is_ai_assistant = false` when this label is assigned,
+stopping the bot and routing the conversation to human agents in one step.
+
+```bash
+# Step 1 — confirm the bot's configured handoff label (do this once; remember the value)
+node ../automate-notifyer/scripts/list-bots.js --pretty
+# Look for: handoff_label — e.g. "Human"
+
+# Step 2 — assign the handoff label (this stops the bot AND routes to humans)
+node scripts/assign-label.js --phone 14155550123 --label "Human" --pretty
+```
+
+**What happens automatically after Step 2:**
+- Notifyer detects `label = handoff_label` on the recipient
+- Sets `is_ai_assistant = false` — bot stops responding immediately
+- Conversation appears in the queue for Team Members scoped to the `"Human"` label
+- Human agents see it in their filtered conversation list in the chat app
+
+**Do NOT call `set-handoff.js` separately** — the label assignment already triggers
+the handoff. Calling both would be redundant.
+
+**If the handoff_label is not configured on the bot**, fall back to:
+
+```bash
+# Fallback — manual handoff without label routing
+node scripts/set-handoff.js --phone 14155550123 --mode human --pretty
+```
+
+This stops the bot but does not route to a label-scoped agent queue.
+
+---
+
+### Agent guidance — detecting human request intent
+
+When running as an AI bot in a conversation, monitor for these signals and
+trigger the human handover workflow above:
+
+- Explicit: "I want to speak to a human", "talk to an agent", "give me a person",
+  "connect me to support", "I need a representative", "human please"
+- Implicit: "this isn't helping", "you don't understand", "I need real help",
+  "call me", "this is urgent", "I want to escalate"
+- Repeated failures: if the bot has failed to resolve the issue after 3 attempts,
+  proactively offer handover
+
+Before escalating, optionally send an acknowledgement message:
+
+```bash
+node scripts/send-text.js --phone 14155550123 \
+  --message "I'm connecting you with a human agent now. Someone will be with you shortly."
+```
+
+Then immediately assign the handoff label.
+
+---
+
+### Take over a conversation from the AI bot (manual — human-initiated)
 
 ```bash
 node scripts/set-handoff.js --phone 14155550123 --mode human --pretty
@@ -328,6 +390,10 @@ Requires `NOTIFYER_API_TOKEN` (same token used by all scripts).
 9. **Template scheduling**: `scheduled_time: 0` = immediate send. `0` is NOT a null/empty — it is the explicit "immediate" signal.
 
 10. **list-bots.js uses console auth**: This is intentional — the AI config endpoint is in the console API group. Both Bearer and raw token use the same JWT, just different formats.
+
+11. **Human handover = assign the handoff_label, not set-handoff.js**: When a contact requests a human, use `assign-label.js --label "<handoff_label>"`. This assigns the label AND automatically flips `is_ai_assistant = false` in one step. Calling `set-handoff.js` alone stops the bot but does NOT route the conversation into the human agent's label queue. Always prefer the label-based path. If `handoff_label` is unknown, run `list-bots.js` once to retrieve it.
+
+12. **Proactive handover**: If the bot has failed to resolve the contact's issue after 3 attempts, or if the contact repeats the same question more than twice, proactively offer a human handover without waiting to be asked explicitly.
 
 ---
 
