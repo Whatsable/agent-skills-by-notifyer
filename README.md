@@ -140,6 +140,8 @@ Notifyer's backend uses **three distinct auth modes** depending on which API sur
 
 The **same JWT** from `login.js` works for both Console and Chat modes — only the header format differs. Scripts automatically select the correct mode. The Developer API key is a separate credential retrieved with `get-api-key.js`.
 
+For full curl examples, a decision guide, token lifecycle notes, and error diagnostics, see **[AUTHENTICATION.md](AUTHENTICATION.md)**.
+
 ---
 
 ## Available Skills

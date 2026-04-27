@@ -346,6 +346,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 
 ## References
 
+- `../../AUTHENTICATION.md` — **All three auth surfaces** (Console/Chat/Developer) with curl examples, decision guide, and error diagnostics
 - `references/templates-reference.md` — Template data model, all endpoints, name rules, categories, media upload, button shapes, status lifecycle, body variables
 - `references/bots-reference.md` — AI Bot data model, all CRUD endpoints, OpenAI integration, file upload, set-as-default, plan requirements, bot-assignment in chat
 - `references/broadcasts-reference.md` — Full 3-step broadcast workflow, all `/api:6_ZYypAc` endpoints, data model, delivery modes, CSV format, timezone handling, download endpoint

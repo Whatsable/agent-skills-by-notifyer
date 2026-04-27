@@ -352,6 +352,7 @@ node scripts/add-note.js --phone 14155550123 --note ""   # clear note
 
 | File | Coverage |
 |------|----------|
+| `../../AUTHENTICATION.md` | **All three auth surfaces** — curl examples, decision guide, header formats, error diagnostics |
 | `references/recipients-reference.md` | Recipient object, GET/PATCH endpoints, 24h window, label routing |
 | `references/messaging-reference.md` | Text, template, attachment send APIs — all parameters and side effects |
 | `references/labels-handoff-reference.md` | Label assignment, keyword auto-labelling, handoff modes, bot assignment |

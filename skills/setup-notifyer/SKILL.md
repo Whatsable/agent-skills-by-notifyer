@@ -409,6 +409,7 @@ Notifyer's backend uses Xano-style API group IDs in the URL path:
 
 ## References
 
+- `../../AUTHENTICATION.md` — **Start here.** All three auth surfaces (Console/Chat/Developer) with curl examples, decision guide, environment variables, and error diagnostics
 - `references/account-reference.md` — Full API reference for auth endpoints, field types, error codes, and token usage
 - `references/whatsapp-connection-reference.md` — Connection status fields, onboarding checklist, rate limits, and architecture notes
 - `references/plans-reference.md` — Plan filters, PricingTier shape, LatestPlan fields, status values, billing model
