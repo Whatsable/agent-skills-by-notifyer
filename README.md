@@ -380,7 +380,7 @@ node scripts/update-recipient.js --phone 14155550123 --name "John Doe"
 |--------|-------------|
 | `send-text.js` | Send a free-text message (24h window required) |
 | `send-template.js` | Send a template message (works any time) |
-| `send-attachment.js` | Upload a file and send it as a media message |
+| `send-attachment.js` | Upload 1–10 files and send each as a media message (image/video/audio/document — auto-detected) |
 
 ```bash
 # Check 24h window first:
@@ -399,8 +399,13 @@ node scripts/send-template.js --list
 # Preview a template send without sending (--dry-run):
 node scripts/send-template.js --phone 14155550123 --name order_confirm --dry-run
 
-# Send attachment:
+# Send a single attachment:
 node scripts/send-attachment.js --phone 14155550123 --file ./invoice.pdf --pretty
+
+# Send multiple attachments (up to 10, comma-separated):
+node scripts/send-attachment.js --phone 14155550123 \
+  --files "./photo.jpg,./invoice.pdf,./video.mp4" \
+  --caption "See attached files" --pretty
 ```
 
 > **24h Window Rule:** WhatsApp only allows free-text and attachment messages within 24 hours of the recipient's last inbound message. `send-text.js` enforces this automatically and exits with a clear error if the window is closed. Use `send-template.js` when the window is closed.
@@ -771,16 +776,6 @@ Skills use **progressive disclosure**: agents load only the skill name and descr
 Compatible agents (partial list): OpenClaw, Cursor, Claude Code, GitHub Copilot, VS Code, Gemini CLI, Amp, Roo Code, Junie, OpenHands, Mux, Goose, Letta, Firebender, Factory, Piebald, TRAE, Spring AI, and [many more](https://agentskills.io).
 
 ---
-
-## Testing
-
-A complete test suite covering all 57 scripts is available in [`TESTING.md`](TESTING.md).
-
-It includes:
-- Unit test prompts for every individual script
-- Integration workflow tests (onboarding, broadcast campaigns, chat triage, etc.)
-- Error & edge case tests (expired token, 24h window, degraded connection, destroy guards)
-- A `smoke-test.sh` script for quick read-only validation of all live endpoints
 
 ---
 
