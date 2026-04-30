@@ -399,13 +399,21 @@ node scripts/send-template.js --list
 # Preview a template send without sending (--dry-run):
 node scripts/send-template.js --phone 14155550123 --name order_confirm --dry-run
 
-# Send a single attachment:
+# Send a single attachment (no caption):
 node scripts/send-attachment.js --phone 14155550123 --file ./invoice.pdf --pretty
 
-# Send multiple attachments (up to 10, comma-separated):
+# Send a single attachment with caption:
+node scripts/send-attachment.js --phone 14155550123 --file ./photo.jpg --caption "Here you go"
+
+# Send multiple attachments — shared caption:
 node scripts/send-attachment.js --phone 14155550123 \
   --files "./photo.jpg,./invoice.pdf,./video.mp4" \
   --caption "See attached files" --pretty
+
+# Send multiple attachments — per-file captions (JSON array, positional, "" = no caption):
+node scripts/send-attachment.js --phone 14155550123 \
+  --files "./photo.jpg,./invoice.pdf,./video.mp4" \
+  --captions '["Great photo","Your invoice",""]'
 ```
 
 > **24h Window Rule:** WhatsApp only allows free-text and attachment messages within 24 hours of the recipient's last inbound message. `send-text.js` enforces this automatically and exits with a clear error if the window is closed. Use `send-template.js` when the window is closed.

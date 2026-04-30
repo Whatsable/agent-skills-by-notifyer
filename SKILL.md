@@ -191,15 +191,25 @@ node skills/chat-notifyer/scripts/send-template.js \
   --phone 14155550123 --template order_confirmation \
   --variables '{"1":"John","2":"12345"}'
 
-# Send a single attachment
+# Send a single attachment (no caption)
+node skills/chat-notifyer/scripts/send-attachment.js \
+  --phone 14155550123 --file ./invoice.pdf
+
+# Send a single attachment with caption
 node skills/chat-notifyer/scripts/send-attachment.js \
   --phone 14155550123 --file ./invoice.pdf --caption "Your invoice"
 
-# Send multiple attachments (up to 10) — uploads 3 concurrently, sends sequentially
+# Send multiple attachments — shared caption
 node skills/chat-notifyer/scripts/send-attachment.js \
   --phone 14155550123 \
   --files "./photo.jpg,./invoice.pdf,./video.mp4" \
   --caption "See attached files"
+
+# Send multiple attachments — per-file captions (JSON array, "" = no caption for that file)
+node skills/chat-notifyer/scripts/send-attachment.js \
+  --phone 14155550123 \
+  --files "./photo.jpg,./invoice.pdf,./video.mp4" \
+  --captions '["Great photo","Your invoice",""]'
 
 # Assign a label
 node skills/chat-notifyer/scripts/assign-label.js \

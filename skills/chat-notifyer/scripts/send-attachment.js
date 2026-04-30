@@ -24,11 +24,22 @@
  * Usage (single file — backwards compatible):
  *   node scripts/send-attachment.js --phone 14155550123 --file /path/to/invoice.pdf
  *   node scripts/send-attachment.js --phone 14155550123 --file /path/to/photo.jpg --caption "Here you go"
+ *   node scripts/send-attachment.js --phone 14155550123 --file /path/to/photo.jpg   # no caption
  *
- * Usage (multiple files):
+ * Usage (multiple files — shared caption):
  *   node scripts/send-attachment.js --phone 14155550123 \
  *     --files "/path/to/photo.jpg,/path/to/invoice.pdf,/path/to/video.mp4" \
  *     --caption "See attached files"
+ *
+ * Usage (multiple files — per-file captions):
+ *   node scripts/send-attachment.js --phone 14155550123 \
+ *     --files "/path/to/photo.jpg,/path/to/invoice.pdf,/path/to/video.mp4" \
+ *     --captions '["Great photo","Your invoice",""]'
+ *
+ *   --captions is a JSON array of strings, one entry per file (positional).
+ *   Use "" to send a specific file without a caption.
+ *   If --captions has fewer entries than files, remaining files fall back to --caption (or no caption).
+ *   --caption and --captions can be combined: --caption is the fallback for unspecified positions.
  *
  * Required Flags:
  *   --phone <number>        Recipient phone number WITHOUT + prefix (integer).
@@ -37,17 +48,20 @@
  *                           --file and --files cannot be used together.
  *
  * Optional Flags:
- *   --caption <text>        Caption applied to ALL files (required for images/videos per
- *                           frontend validation; use "" to send without caption).
+ *   --caption <text>        Caption applied to ALL files (or used as fallback when --captions
+ *                           does not cover every position). Omit entirely to send without caption.
+ *   --captions <json>       Per-file captions as a JSON string array, e.g. '["cap1","","cap3"]'.
+ *                           Overrides --caption for each position where an entry is present.
+ *                           "" at any position means no caption for that specific file.
  *   --schedule <time>       Schedule all messages: "DD/MM/YYYY HH:mm"
  *                           All files get the same scheduled time.
  *   --pretty                Print upload and send progress to stderr.
  *
  * Output (success — single file):
- *   { "ok": true, "data": { media_link, mime_type, media_type, send_result } }
+ *   { "ok": true, "data": { media_link, mime_type, media_type, caption, send_result } }
  *
  * Output (success — multiple files):
- *   { "ok": true, "data": { sent: [...], failed: [], total: 3, success_count: 3 } }
+ *   { "ok": true, "data": { sent: [{ file, caption, media_link, ... }], failed: [], total: 3, success_count: 3 } }
  *
  * Output (failure):
  *   { "ok": false, "error": "...", "blocked": false }
@@ -129,6 +143,60 @@ function buildWhatsAppMediaPayload(endpointType, mediaLink, filePath, caption) {
         },
       };
   }
+}
+
+/**
+ * Parse the --captions JSON array flag.
+ * Returns an array of strings (empty string = "no caption for this file").
+ * Returns null when the flag is not provided.
+ * Throws a descriptive Error when the value is not a valid JSON string array.
+ *
+ * @param {string|undefined} raw
+ * @returns {string[]|null}
+ */
+function parseCaptionsFlag(raw) {
+  if (raw == null) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(
+      `--captions must be a valid JSON array, e.g. '["first caption","","third caption"]'. Parse failed on: ${raw}`
+    );
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(
+      `--captions must be a JSON array, not ${typeof parsed}. Example: '["caption1","caption2"]'`
+    );
+  }
+  for (let i = 0; i < parsed.length; i++) {
+    if (typeof parsed[i] !== "string") {
+      throw new Error(
+        `--captions[${i}] must be a string. Got: ${JSON.stringify(parsed[i])}. Use "" for no caption.`
+      );
+    }
+  }
+  return parsed;
+}
+
+/**
+ * Resolve the caption to use for a file at a given position index.
+ *
+ * Priority:
+ *   1. captionsArray[index]  — if --captions was provided and has an entry at this position
+ *                               (even "" is honoured, meaning "no caption")
+ *   2. fallbackCaption       — --caption value, or "" if --caption was not provided
+ *
+ * @param {number} index
+ * @param {string[]|null} captionsArray
+ * @param {string} fallbackCaption
+ * @returns {string}
+ */
+function captionForFile(index, captionsArray, fallbackCaption) {
+  if (captionsArray !== null && index < captionsArray.length) {
+    return captionsArray[index];
+  }
+  return fallbackCaption;
 }
 
 function parseDateDDMMYYYY(str) {
@@ -305,7 +373,8 @@ async function main() {
   const phoneRaw = getFlag(flags, "phone");
   const singleFile = getFlag(flags, "file");
   const multiFiles = getFlag(flags, "files");
-  const caption = getFlag(flags, "caption") ?? "";
+  const captionFallback = getFlag(flags, "caption") ?? "";
+  const captionsRaw = getFlag(flags, "captions");
   const scheduleStr = getFlag(flags, "schedule");
   const pretty = getBooleanFlag(flags, "pretty");
 
@@ -322,6 +391,15 @@ async function main() {
     return;
   }
 
+  // Parse --captions early so we fail fast before any network calls
+  let captionsArray = null;
+  try {
+    captionsArray = parseCaptionsFlag(captionsRaw);
+  } catch (e) {
+    printJson(err(e.message));
+    return;
+  }
+
   // Build the file list
   const rawPaths = multiFiles
     ? multiFiles.split(",").map((p) => p.trim()).filter(Boolean)
@@ -329,6 +407,14 @@ async function main() {
 
   if (rawPaths.length > MAX_FILES) {
     printJson(err(`Too many files: ${rawPaths.length} provided, maximum is ${MAX_FILES}.`));
+    return;
+  }
+
+  if (captionsArray !== null && captionsArray.length > rawPaths.length) {
+    printJson(err(
+      `--captions has ${captionsArray.length} entries but only ${rawPaths.length} file(s) provided. ` +
+      `Each entry maps by position — extra entries are not allowed.`
+    ));
     return;
   }
 
@@ -369,9 +455,10 @@ async function main() {
   // ── Single file (backwards-compatible path) ──────────────────────────────
   if (rawPaths.length === 1) {
     const filePath = rawPaths[0];
+    const fileCaption = captionForFile(0, captionsArray, captionFallback);
     if (pretty) process.stderr.write(`Sending 1 file to +${phone}...\n`);
     const result = await processSingleFile({
-      config, currentRecipient, filePath, caption, scheduledTime, scheduleStr, pretty,
+      config, currentRecipient, filePath, caption: fileCaption, scheduledTime, scheduleStr, pretty,
     });
     if (!result.ok) {
       printJson(err(result.error));
@@ -381,15 +468,22 @@ async function main() {
       process.stderr.write(scheduledTime ? `\nMedia scheduled for ${scheduleStr}\n` : `\nMedia sent!\n`);
       process.stderr.write(`  To: +${phone}\n`);
       process.stderr.write(`  File: ${basename(filePath)} (${result.data.media_type})\n`);
-      if (caption) process.stderr.write(`  Caption: "${caption}"\n`);
+      if (fileCaption) process.stderr.write(`  Caption: "${fileCaption}"\n`);
       process.stderr.write("\n");
     }
-    printJson(ok(result.data));
+    printJson(ok({ ...result.data, caption: fileCaption }));
     return;
   }
 
   // ── Multiple files ────────────────────────────────────────────────────────
-  if (pretty) process.stderr.write(`\nSending ${rawPaths.length} files to +${phone}...\n`);
+  if (pretty) {
+    process.stderr.write(`\nSending ${rawPaths.length} files to +${phone}...\n`);
+    if (captionsArray) {
+      process.stderr.write(`  Per-file captions provided (${captionsArray.length} of ${rawPaths.length} positions)\n`);
+    } else if (captionFallback) {
+      process.stderr.write(`  Shared caption: "${captionFallback}"\n`);
+    }
+  }
 
   // Phase 1: Upload all files concurrently, UPLOAD_CONCURRENCY at a time
   if (pretty) process.stderr.write(`\nPhase 1 — Uploading ${rawPaths.length} files (${UPLOAD_CONCURRENCY} at a time)...\n`);
@@ -444,14 +538,19 @@ async function main() {
   const sendFailed = [...uploadFailed.map((r) => ({ file: r.filePath, error: r.error, stage: "upload" }))];
 
   for (const upload of uploadSucceeded) {
-    const { filePath, mimeType, endpointType, mediaLink } = upload;
-    if (pretty) process.stderr.write(`  Sending ${basename(filePath)} via /web/send/${endpointType}...\n`);
+    const { filePath, mimeType, endpointType, mediaLink, globalIdx } = upload;
+    const fileCaption = captionForFile(globalIdx, captionsArray, captionFallback);
 
-    const waPayload = buildWhatsAppMediaPayload(endpointType, mediaLink, filePath, caption);
+    if (pretty) {
+      const capLabel = fileCaption ? ` — caption: "${fileCaption}"` : " — no caption";
+      process.stderr.write(`  Sending ${basename(filePath)} via /web/send/${endpointType}${capLabel}...\n`);
+    }
+
+    const waPayload = buildWhatsAppMediaPayload(endpointType, mediaLink, filePath, fileCaption);
     const sendBody = {
       media_link: mediaLink,
       mime_type: mimeType,
-      caption,
+      caption: fileCaption,
       currentRecipient,
       scheduled_time: scheduledTime,
       ...waPayload,
@@ -480,14 +579,12 @@ async function main() {
       }
     }
 
-    sent.push({ file: filePath, media_link: mediaLink, mime_type: mimeType, media_type: endpointType });
+    sent.push({ file: filePath, caption: fileCaption, media_link: mediaLink, mime_type: mimeType, media_type: endpointType });
     if (pretty) process.stderr.write(`  ✓ ${basename(filePath)}\n`);
   }
 
   if (pretty) {
-    process.stderr.write(`\n${scheduledTime ? "Scheduled" : "Sent"}: ${sent.length}/${rawPaths.length} file(s)`);
-    if (caption) process.stderr.write(` — Caption: "${caption}"`);
-    process.stderr.write(`\n\n`);
+    process.stderr.write(`\n${scheduledTime ? "Scheduled" : "Sent"}: ${sent.length}/${rawPaths.length} file(s)\n\n`);
   }
 
   const allOk = sendFailed.length === 0;

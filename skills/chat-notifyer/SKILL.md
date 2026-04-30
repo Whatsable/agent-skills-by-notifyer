@@ -173,18 +173,32 @@ node scripts/send-template.js --phone 14155550123 --template tmpl_abc123
 ### Send a file (image, PDF, video, audio)
 
 ```bash
-# Single file
+# Single file — no caption
 node scripts/send-attachment.js --phone 14155550123 --file /path/to/invoice.pdf --pretty
+
+# Single file — with caption
 node scripts/send-attachment.js --phone 14155550123 --file /path/to/photo.jpg --caption "Your order photo"
 
-# Multiple files — up to 10, comma-separated (matches chat app FileSelectionMenu)
+# Multiple files — shared caption for all
 node scripts/send-attachment.js --phone 14155550123 \
   --files "/path/to/photo.jpg,/path/to/invoice.pdf,/path/to/video.mp4" \
   --caption "See the attached files" --pretty
+
+# Multiple files — per-file captions (JSON array, positional)
+node scripts/send-attachment.js --phone 14155550123 \
+  --files "/path/to/photo.jpg,/path/to/invoice.pdf,/path/to/video.mp4" \
+  --captions '["Great photo","Your invoice",""]'
+
+# Mixed — per-file captions with a fallback for unspecified positions
+node scripts/send-attachment.js --phone 14155550123 \
+  --files "/path/to/photo.jpg,/path/to/invoice.pdf,/path/to/video.mp4" \
+  --captions '["Great photo"]' \
+  --caption "See attached"
 ```
 
-Files are uploaded 3 at a time concurrently, then sent sequentially.
-All files share the same `--caption` and `--schedule`. Max 10 files per call.
+Files are uploaded 3 at a time concurrently, then sent sequentially. Max 10 files per call.
+
+`--captions` is a JSON string array — one entry per file by position. Use `""` for no caption on a specific file. If the array is shorter than the file list, remaining files use `--caption` (or no caption if `--caption` is also omitted). `--caption` and `--captions` can be combined.
 
 ### Schedule a message for later
 
