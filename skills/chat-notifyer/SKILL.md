@@ -173,9 +173,18 @@ node scripts/send-template.js --phone 14155550123 --template tmpl_abc123
 ### Send a file (image, PDF, video, audio)
 
 ```bash
+# Single file
 node scripts/send-attachment.js --phone 14155550123 --file /path/to/invoice.pdf --pretty
 node scripts/send-attachment.js --phone 14155550123 --file /path/to/photo.jpg --caption "Your order photo"
+
+# Multiple files — up to 10, comma-separated (matches chat app FileSelectionMenu)
+node scripts/send-attachment.js --phone 14155550123 \
+  --files "/path/to/photo.jpg,/path/to/invoice.pdf,/path/to/video.mp4" \
+  --caption "See the attached files" --pretty
 ```
+
+Files are uploaded 3 at a time concurrently, then sent sequentially.
+All files share the same `--caption` and `--schedule`. Max 10 files per call.
 
 ### Schedule a message for later
 
@@ -406,7 +415,7 @@ Requires `NOTIFYER_API_TOKEN` (same token used by all scripts).
 | `scripts/filter-recipients-by-label.js` | List recipients filtered by label(s) | Chat |
 | `scripts/send-text.js` | Send a free-text message (auto-checks 24h window; refuses if closed) | Chat |
 | `scripts/send-template.js` | Send a template message (no window required; supports `--name`, `--list`, `--dry-run`) | Chat |
-| `scripts/send-attachment.js` | Upload file then send as image/video/audio/document (auto-detects type) | Chat |
+| `scripts/send-attachment.js` | Upload 1–10 files then send as image/video/audio/document (auto-detects type per file; concurrent upload, sequential send) | Chat |
 | `scripts/assign-label.js` | Assign a label to a recipient | Chat |
 | `scripts/remove-label.js` | Remove a label from a recipient | Chat |
 | `scripts/set-handoff.js` | Toggle AI bot vs. human mode | Chat |
